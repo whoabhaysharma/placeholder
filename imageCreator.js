@@ -1,27 +1,31 @@
-const express = require('express');
-const { createCanvas } = require('canvas');
+import express from 'express'
+import { ImageGenerator } from './ImageGenerator.js';
 
 const app = express();
+const port = 3000;
 
-app.get('/:dimensions.jpg', (req, res) => {
-    const { dimensions } = req.params;
-    const [width, height] = dimensions.split('x');
+app.use(express.json());
 
-    // Create a canvas with specified width and height
-    const canvas = createCanvas(parseInt(width), parseInt(height));
-    const ctx = canvas.getContext('2d');
+app.get('/image/:dimension.jpg', async (req, res) => {
+    try {
+        const dimension = req.params.dimension;
+        const [width, height] = dimension.split("x").map(val => parseInt(val));
 
-    // Fill the canvas with white color
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, parseInt(width), parseInt(height));
+        if (isNaN(width) || isNaN(height)) {
+            throw new Error("Invalid dimension format");
+        }
 
-    // Convert canvas to a PNG buffer and send it as a response
-    const buffer = canvas.toBuffer();
-    res.set('Content-Type', 'image/png');
-    res.send(buffer);
+        const image = new ImageGenerator({ width: width, height: height }, "hello")
+        const buffer = image.getBuffer()
+
+        res.set('Content-Type', 'image/jpeg');
+        res.send(buffer);
+    } catch (error) {
+        console.error("Error generating image:", error);
+        res.status(500).send("Internal Server Error");
+    }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.listen(port, () => {
+    console.log('port listening')
+})
