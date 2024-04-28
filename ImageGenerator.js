@@ -18,7 +18,7 @@ export class ImageGenerator{
         ctx.font = "30px Arial"; // Set font size and type
         ctx.textAlign = "center"; // Center align the text
         ctx.textBaseline = "middle"; // Middle align the text vertically
-        ctx.fillText("Hello, World!", width / 2, height / 2);
+        ctx.fillText(this.text, width / 2, height / 2);
 
         this.buffer = canvas.toBuffer('image/jpeg')
     }
