@@ -2,6 +2,9 @@ import express from 'express'
 import { ImageGenerator } from './ImageGenerator.js';
 import Ffmpeg from 'fluent-ffmpeg';
 import { Readable } from 'stream';
+import path from 'path';
+import { promises as fsPromises } from 'fs';
+const { unlink } = fsPromises;
 
 const app = express();
 const port = 3000;
@@ -11,7 +14,7 @@ app.use(express.json());
 const ffmpegPath = 'ffmpeg/ffmpeg'; // Specify the path to ffmpeg binary
 
 Ffmpeg.setFfmpegPath(ffmpegPath);
-app.get('/image/:dimension.mp4', async (req, res) => {
+app.get('/video/:dimension.mp4', async (req, res) => {
     try {
         const dimension = req.params.dimension;
         const [width, height] = dimension.split("x").map(val => parseInt(val));
@@ -49,7 +52,21 @@ app.get('/image/:dimension.mp4', async (req, res) => {
             .output('output.mp4')
             .on('end', () => {
                 console.log('Video generation completed');
-                res.send('Video generation completed');
+                const videoPath = path.join(path.resolve(), 'output.mp4');
+                res.sendFile(videoPath, (err) => {
+                    if (err) {
+                        console.error('Error sending file:', err);
+                    } else {
+                        // File sent successfully, now remove it
+                        unlink(videoPath, (unlinkErr) => {
+                            if (unlinkErr) {
+                                console.error('Error removing file:', unlinkErr);
+                            } else {
+                                console.log('File removed successfully.');
+                            }
+                        });
+                    }
+                });
             })
             .on('error', (err) => {
                 console.error('Error generating video:', err);
